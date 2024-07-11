@@ -1,0 +1,165 @@
+.qcircuit {
+  display: grid;
+  box-sizing: border-box;
+
+  /* The N here is the number of rows */
+  grid-template-rows: repeat(3, 0.75em min-content 0.75em);
+  /* N here is the number of columns */
+  grid-template-columns: repeat(3, 0.75em min-content 0.75em);
+}
+
+.gate {
+  border: 1px solid #000;
+  padding: 0.5em;
+}
+
+.label {
+  padding: 0.5em;
+}
+
+.gate,
+.label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wire,
+.vwire {
+  display: grid;
+
+  &::before,
+  &::after {
+    background: currentColor;
+  }
+
+  &::before {
+    content: "";
+  }
+
+  &.double {
+    &::after {
+      content: "";
+    }
+  }
+}
+
+.wire {
+  &.first-half, &.second-half {
+    width: 50%;
+  }
+  &.second-half {
+    position: relative;
+    left: 50%;
+  }
+
+  grid-template-rows: 1fr 1px 1fr;
+
+  &::before,
+  &::after {
+    height: 1px;
+  }
+
+  &::before {
+    grid-row: 2;
+  }
+
+  &.double {
+    grid-template-rows: 1fr 1px 3px 1px 1fr;
+
+    &::after {
+      grid-row: 4;
+    }
+  }
+}
+
+.vwire {
+  &.first-half, &.second-half {
+    height: 50%;
+  }
+  &.second-half {
+    position: relative;
+    top: 50%;
+  }
+
+  grid-template-columns: 1fr 1px 1fr;
+
+  &::before,
+  &::after {
+    width: 1px;
+  }
+
+  &::before {
+    grid-column: 2;
+  }
+
+  &.double {
+    grid-template-columns: 1fr 1px 3px 1px 1fr;
+
+    &::after {
+      grid-column: 4;
+    }
+  }
+}
+
+.dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before {
+    content: "";
+    background: currentColor;
+    border-radius: 1000px;
+    width: 0.5em;
+    height: 0.5em;
+  }
+}
+
+.circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before {
+    content: "";
+    border: 1px solid currentColor;
+    border-radius: 1000px;
+    width: 0.75em;
+    height: 0.75em;
+  }
+}
+
+.x {
+  $size: 0.65em;
+  position: relative;
+
+  min-height: $size;
+  min-width: $size;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    background: currentColor;
+    height: 1px;
+    width: $size;
+    inset: 0;
+    margin: auto;
+  }
+
+  &::before {
+    transform: rotateZ(45deg);
+  }
+  &::after {
+    transform: rotateZ(-45deg);
+  }
+}
+
+.box {
+  border: 1px dashed currentColor;
+}
+
+.barrier {
+  border-left: 1px dashed currentColor;
+}
