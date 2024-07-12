@@ -2,14 +2,25 @@
   "name": "qcircuit",
   "version": "0.1.0",
   "description": "Good enough quantum circuit diagrams based on the Qcircuit LaTeX package",
+  "author": "Giaco Corsiglia (https://giacocorsiglia.com)",
+  "license": "MIT",
+  "main": "dist/qcircuit.js",
+  "module": "dist/qcircuit.mjs",
+  "types": "dist/qcircuit.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/qcircuit.js",
+      "import": "./dist/qcircuit.mjs",
+      "types": "./dist/qcircuit.d.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "test": "vitest",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && cp src/qcircuit.d.ts dist/qcircuit.d.ts",
     "preview": "vite preview"
   },
-  "author": "",
-  "license": "MIT",
+  "packageManager": "npm@10.5.0",
   "devDependencies": {
     "prettier": "^3.3.2",
     "sass": "^1.77.6",
