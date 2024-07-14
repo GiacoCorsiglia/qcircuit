@@ -17,6 +17,7 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest",
+    "types": "tsc --noEmit",
     "build": "tsc && vite build && cp src/qcircuit.d.ts dist/qcircuit.d.ts",
     "preview": "vite preview"
   },
