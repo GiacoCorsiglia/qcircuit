@@ -3,8 +3,8 @@
 //
 
 /**
- * https://stackoverflow.com/a/52490977
  * Defines a tuple type of length N with elements of type T.
+ * https://stackoverflow.com/a/52490977
  */
 type Tuple<T, N extends number> = N extends N
   ? number extends N
@@ -107,6 +107,17 @@ const defineCommand = <
   commands.set(command.name, command as any);
 };
 
+// SINGLE CELLS.
+
+// Simple cells.
+
+defineCommand({
+  name: "\\gate",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
 defineCommand({
   name: "\\control",
   arguments: 0,
@@ -170,8 +181,239 @@ defineCommand({
   evaluateArguments() {},
 });
 
+// Ghost cells.
+
 defineCommand({
-  name: "\\gate",
+  name: "\\ghost",
+  arguments: 1,
+  optionalArgument: false,
+  // We can ignore the arguments since this is just a placeholder.
+  evaluateArguments(): void {},
+});
+
+defineCommand({
+  name: "\\pureghost",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\cghost",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\nghost",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+// Alignment.
+
+defineCommand({
+  name: "\\lstick",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\rstick",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\ustick",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\dstick",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+// EXPLICIT WIRE.
+
+// Horizontal.
+
+defineCommand({
+  name: "\\qw",
+  arguments: 0,
+  optionalArgument: true,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\qwa",
+  arguments: 0,
+  optionalArgument: true,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\cw",
+  arguments: 0,
+  optionalArgument: true,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\cwa",
+  arguments: 0,
+  optionalArgument: true,
+  evaluateArguments() {},
+});
+
+// Vertical.
+
+defineCommand({
+  name: "\\qwx",
+  arguments: 0,
+  optionalArgument: true,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\cwx",
+  arguments: 0,
+  optionalArgument: true,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\ctrl",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\ctrlo",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\cctrl",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\cctrlo",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+// Multi.
+
+defineCommand({
+  name: "\\barrier",
+  arguments: 1,
+  optionalArgument: true,
+  evaluateArguments() {},
+});
+
+// Diagonal.
+
+// MULTI CELLS.
+
+defineCommand({
+  name: "\\multigate",
+  arguments: 2,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\sgate",
+  arguments: 2,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\smeterB",
+  arguments: 2,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\multimeasure",
+  arguments: 2,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\multimeasureD",
+  arguments: 2,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+// GLOBAL LABELS.
+
+defineCommand({
+  name: "\\gategroup",
+  arguments: 6,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\inputgroup",
+  arguments: 4,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\inputgroupv",
+  arguments: 5,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\inputgrouph",
+  arguments: 5,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+// SPACING.
+
+defineCommand({
+  name: "\\push",
+  arguments: 1,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\cds",
+  arguments: 2,
+  optionalArgument: false,
+  evaluateArguments() {},
+});
+
+defineCommand({
+  name: "\\mbox",
   arguments: 1,
   optionalArgument: false,
   evaluateArguments() {},

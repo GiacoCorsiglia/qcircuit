@@ -23,8 +23,6 @@
 - \cghost{#1}
 - \nghost{#1}
 
-- \cds{#1}{#2}
-
 ### Aligners
 
 - \lstick{#1}
@@ -71,6 +69,7 @@
 # Weird
 
 - \push{#1}
+- \cds{#1}{#2}
 
 - \link{#1}{#2}
   -  Draws a wire or connecting line to the element #1 rows down and #2 columns forward.
