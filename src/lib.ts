@@ -2,19 +2,6 @@
 // HELPERS.
 //
 
-/**
- * Defines a tuple type of length N with elements of type T.
- * https://stackoverflow.com/a/52490977
- */
-type Tuple<T, N extends number> = N extends N
-  ? number extends N
-    ? T[]
-    : _TupleOf<T, N, []>
-  : never;
-type _TupleOf<T, N extends number, R extends unknown[]> = R["length"] extends N
-  ? R
-  : _TupleOf<T, N, [T, ...R]>;
-
 type Writeable<T> = {
   -readonly [K in keyof T]: T[K];
 };
@@ -30,6 +17,8 @@ const last = <T>(array: readonly T[]): T | undefined => {
 //
 
 class QCircuitError extends Error {}
+
+class UnimplementedError extends QCircuitError {}
 
 class AssertionError extends QCircuitError {}
 
@@ -61,14 +50,83 @@ class MissingArgumentError extends ParseError {
   }
 }
 
+class ArgumentEvaluationError extends QCircuitError {}
+
 //
 // COMMANDS.
 //
 
+abstract class Argument<T> {
+  public readonly _type!: T;
+
+  abstract evaluate(value: string): T;
+}
+
+class IgnoredArgument extends Argument<null> {
+  evaluate(_: string): null {
+    return null;
+  }
+}
+
+class StringArgument extends Argument<string> {
+  evaluate(value: string): string {
+    return value;
+  }
+}
+
+class IntegerArgument extends Argument<number> {
+  evaluate(value: string): number {
+    value = value.trim();
+    const parsed = parseInt(value);
+    if (Number.isNaN(parsed)) {
+      throw new ArgumentEvaluationError(
+        `Expected: an integer\nReceived: "${parsed}"`
+      );
+    }
+    return parsed;
+  }
+}
+
+class LiteralArgument<
+  const L extends readonly [string, ...string[]],
+> extends Argument<L[number]> {
+  private literals: Set<L[number]>;
+
+  constructor(...literals: L) {
+    super();
+    this.literals = new Set(literals);
+  }
+
+  evaluate(value: string): L[number] {
+    if (!this.literals.has(value)) {
+      throw new ArgumentEvaluationError(
+        (this.literals.size > 1
+          ? `Expected: One of ${[...this.literals].join(", ")}`
+          : `Expected: ${[...this.literals][0]}`) + `\nReceived: "${value}"`
+      );
+    }
+    return value;
+  }
+}
+
+const ignoredArg = new IgnoredArgument();
+const stringArg = new StringArgument();
+const integerArg = new IntegerArgument();
+
+type EvaluatedArguments<
+  Args extends readonly Argument<unknown>[],
+  OArg extends Argument<unknown> | undefined,
+> =
+  OArg extends Argument<unknown>
+    ? [..._EvaluatedArgument<Args>, OArg["_type"]]
+    : _EvaluatedArgument<Args>;
+type _EvaluatedArgument<Args extends readonly Argument<unknown>[]> = {
+  [K in keyof Args]: Args[K]["_type"];
+};
+
 interface Command<
-  NArgs extends number = number,
-  OArg extends boolean = boolean,
-  TArgs = void,
+  Args extends readonly Argument<unknown>[] = [],
+  OArg extends Argument<unknown> | undefined = Argument<unknown> | undefined,
 > {
   /**
    * Name of the command with leading backslash
@@ -77,32 +135,28 @@ interface Command<
    */
   readonly name: string;
   /**
-   * Number of required arguments.
+   * List of required argument types.
    *
    * @example \multigate{#1}{#2} has 2 required arguments.
    */
-  readonly arguments: NArgs;
+  readonly arguments?: Args;
   /**
    * Whether the command accepts an optional argument.
    */
-  readonly optionalArgument: OArg;
+  readonly optionalArgument?: OArg;
   /**
-   * A function that accepts the positional arguments and parses them into
-   * usable parameters.
+   * Render function.  Accepts a positional list of arguments, with the optional argument in the last
    */
-  readonly evaluateArguments: OArg extends true
-    ? (...args: [...Tuple<string, NArgs>, string | undefined]) => TArgs
-    : (...args: Tuple<string, NArgs>) => TArgs;
+  readonly render: (...args: EvaluatedArguments<Args, OArg>) => string;
 }
 
 const commands = new Map<string, Command>();
 
 const defineCommand = <
-  NArgs extends number = 0,
-  OArg extends boolean = false,
-  TArgs = void,
+  const Args extends readonly Argument<any>[] = [],
+  OArg extends Argument<any> | undefined = undefined,
 >(
-  command: Command<NArgs, OArg, TArgs>
+  command: Command<Args, OArg>
 ) => {
   commands.set(command.name, command as any);
 };
@@ -113,133 +167,154 @@ const defineCommand = <
 
 defineCommand({
   name: "\\gate",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(tex) {
+    console.log({ tex });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\control",
-  arguments: 0,
-  optionalArgument: false,
-  evaluateArguments() {},
+  render() {
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\controlo",
-  arguments: 0,
-  optionalArgument: false,
-  evaluateArguments() {},
+  render() {
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\targ",
-  arguments: 0,
-  optionalArgument: false,
-  evaluateArguments() {},
+  render() {
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\qswap",
-  arguments: 0,
-  optionalArgument: false,
-  evaluateArguments() {},
+  render() {
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\meter",
-  arguments: 0,
-  optionalArgument: false,
-  evaluateArguments() {},
+  render() {
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\meterB",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(basis) {
+    console.log({ basis });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\measure",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(label) {
+    console.log({ label });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\measureD",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(label) {
+    console.log({ label });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\measuretab",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(label) {
+    console.log({ label });
+    throw new UnimplementedError();
+  },
 });
 
 // Ghost cells.
 
 defineCommand({
   name: "\\ghost",
-  arguments: 1,
-  optionalArgument: false,
-  // We can ignore the arguments since this is just a placeholder.
-  evaluateArguments(): void {},
+  arguments: [ignoredArg],
+  render() {
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\pureghost",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [ignoredArg],
+  render() {
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\cghost",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [ignoredArg],
+  render() {
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\nghost",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [ignoredArg],
+  render() {
+    throw new UnimplementedError();
+  },
 });
 
 // Alignment.
 
 defineCommand({
   name: "\\lstick",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(tex) {
+    console.log({ tex });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\rstick",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(tex) {
+    console.log({ tex });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\ustick",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(tex) {
+    console.log({ tex });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\dstick",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(tex) {
+    console.log({ tex });
+    throw new UnimplementedError();
+  },
 });
 
 // EXPLICIT WIRE.
@@ -248,83 +323,107 @@ defineCommand({
 
 defineCommand({
   name: "\\qw",
-  arguments: 0,
-  optionalArgument: true,
-  evaluateArguments() {},
+  optionalArgument: integerArg,
+  render(to = -1) {
+    console.log({ to });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\qwa",
-  arguments: 0,
-  optionalArgument: true,
-  evaluateArguments() {},
+  optionalArgument: integerArg,
+  render(to = -1) {
+    console.log({ to });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\cw",
-  arguments: 0,
-  optionalArgument: true,
-  evaluateArguments() {},
+  optionalArgument: integerArg,
+  render(to = -1) {
+    console.log({ to });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\cwa",
-  arguments: 0,
-  optionalArgument: true,
-  evaluateArguments() {},
+  optionalArgument: integerArg,
+  render(to = -1) {
+    console.log({ to });
+    throw new UnimplementedError();
+  },
 });
 
 // Vertical.
 
 defineCommand({
   name: "\\qwx",
-  arguments: 0,
-  optionalArgument: true,
-  evaluateArguments() {},
+  optionalArgument: integerArg,
+  render(to = -1) {
+    console.log({ to });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\cwx",
-  arguments: 0,
-  optionalArgument: true,
-  evaluateArguments() {},
+  optionalArgument: integerArg,
+  render(to = -1) {
+    console.log({ to });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\ctrl",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg],
+  render(target) {
+    console.log({ target });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\ctrlo",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg],
+  render(target) {
+    console.log({ target });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\cctrl",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg],
+  render(target) {
+    console.log({ target });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\cctrlo",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg],
+  render(target) {
+    console.log({ target });
+    throw new UnimplementedError();
+  },
 });
 
 // Multi.
 
 defineCommand({
   name: "\\barrier",
-  arguments: 1,
-  optionalArgument: true,
-  evaluateArguments() {},
+  arguments: [integerArg],
+  // This is a horizontal offset, which wouldn't be bad to support...
+  optionalArgument: ignoredArg,
+  render(span) {
+    console.log({ span });
+    throw new UnimplementedError();
+  },
 });
 
 // Diagonal.
@@ -333,90 +432,121 @@ defineCommand({
 
 defineCommand({
   name: "\\multigate",
-  arguments: 2,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg, stringArg],
+  render(span, tex) {
+    console.log({ span, tex });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\sgate",
-  arguments: 2,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg, stringArg],
+  render(span, tex) {
+    console.log({ span, tex });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\smeterB",
-  arguments: 2,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg, stringArg],
+  render(span, basis) {
+    console.log({ span, basis });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\multimeasure",
-  arguments: 2,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg, stringArg],
+  render(span, tex) {
+    console.log({ span, tex });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\multimeasureD",
-  arguments: 2,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg, stringArg],
+  render(span, tex) {
+    console.log({ span, tex });
+    throw new UnimplementedError();
+  },
 });
 
 // GLOBAL LABELS.
 
 defineCommand({
   name: "\\gategroup",
-  arguments: 6,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [
+    integerArg,
+    integerArg,
+    integerArg,
+    integerArg,
+    ignoredArg,
+    new LiteralArgument("--", ".", "_}", "^}", "{", "}", "_)", "^)", "(", ")"),
+  ],
+  render(fromRow, fromCol, toRow, toCol, _, borderStyle) {
+    console.log({ fromRow, fromCol, toRow, toCol, borderStyle });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\inputgroup",
-  arguments: 4,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg, integerArg, ignoredArg, stringArg],
+  render(fromRow, toRow, _, label) {
+    console.log({ fromRow, toRow, label });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\inputgroupv",
-  arguments: 5,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg, integerArg, ignoredArg, ignoredArg, stringArg],
+  render(fromRow, toRow, _a, _b, label) {
+    console.log({ fromRow, toRow, label });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\inputgrouph",
-  arguments: 5,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg, integerArg, ignoredArg, stringArg, ignoredArg],
+  render(fromRow, toRow, _a, label, _b) {
+    console.log({ fromRow, toRow, label });
+    throw new UnimplementedError();
+  },
 });
 
 // SPACING.
 
 defineCommand({
   name: "\\push",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(tex) {
+    console.log({ tex });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\cds",
-  arguments: 2,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [integerArg, stringArg],
+  render(n, tex) {
+    console.log({ n, tex });
+    throw new UnimplementedError();
+  },
 });
 
 defineCommand({
   name: "\\mbox",
-  arguments: 1,
-  optionalArgument: false,
-  evaluateArguments() {},
+  arguments: [stringArg],
+  render(tex) {
+    console.log({ tex });
+    throw new UnimplementedError();
+  },
 });
 
 //
@@ -640,14 +770,10 @@ enum NodeType {
   Group,
 }
 
-interface CommandNode<
-  NArgs extends number = number,
-  OArg extends boolean = boolean,
-  TArgs = void,
-> {
+interface CommandNode {
   readonly type: NodeType.Command;
 
-  readonly command: Command<NArgs, OArg, TArgs>;
+  readonly command: Command;
   readonly arguments: Node[];
 }
 
@@ -867,7 +993,7 @@ export class Parser {
     }
 
     // If the command supports an optional argument, try to parse it.
-    let optionalArgument: Node | undefined = undefined;
+    let optionalArgument: Node | null = null;
     if (command.optionalArgument) {
       // We know the optional argument is specified if the command is followed
       // by "[".
@@ -879,15 +1005,17 @@ export class Parser {
 
     // Try to parse required arguments.
     const parsedArguments: Node[] = [];
-    for (let n = 0; n < command.arguments; n++) {
-      if (this.tokenizer.current.type !== TokenType.OpenBrace) {
-        throw new MissingArgumentError(command, n, this.tokenizer.current);
-      }
+    if (command.arguments) {
+      for (let n = 0; n < command.arguments.length; n++) {
+        if (this.tokenizer.current.type !== TokenType.OpenBrace) {
+          throw new MissingArgumentError(command, n, this.tokenizer.current);
+        }
 
-      parsedArguments.push(this.parseGroup(false));
+        parsedArguments.push(this.parseGroup(false));
+      }
     }
 
-    if (command.optionalArgument && optionalArgument !== undefined) {
+    if (command.optionalArgument && optionalArgument !== null) {
       parsedArguments.push(optionalArgument);
     }
 
